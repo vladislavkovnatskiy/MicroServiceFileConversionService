@@ -1,0 +1,79 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    container_name: fcs-app-postgres
+    environment:
+      - 'POSTGRES_USER=postgres'
+      - 'POSTGRES_PASSWORD=postgres'
+      - 'POSTGRES_DB=postgres'
+    ports:
+      - '5433:5432'
+    networks:
+      - app-network
+
+  kafka:
+    image: apache/kafka:3.9.1
+    container_name: fsc-kafka
+    ports:
+      - '9092:9092'   # доступ с хоста (для запуска из IDE)
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      # Два listener'а: PLAINTEXT — для общения внутри Docker, EXTERNAL — для хоста
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - app-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: fsc-minio
+    ports:
+      - '9000:9000'    # S3 API
+      - '9001:9001'    # Web-консоль
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - app-network
+
+  app:
+    build:
+      context: .
+      dockerfile: DockerfileMultiStages
+    container_name: fcs-app
+    depends_on:
+      - postgres
+    environment:
+      POSTGRES_HOST: fcs-app-postgres   # имя контейнера с БД
+      POSTGRES_PORT: 5432               # ВНУТРЕННИЙ порт (не 5433!)
+      POSTGRES_USERNAME: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: postgres
+      # Kafka — внутри Docker-сети используем внутренний listener
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      # MinIO — внутри Docker-сети используем имя контейнера
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: files
+    networks:
+      - app-network
+
+volumes:
+  minio-data:
+
+networks:
+  app-network:
+    driver: bridge
