@@ -1,0 +1,2 @@
+[jwt]
+filer_signing.key = "local-dev-secret-key-change-me-in-production"

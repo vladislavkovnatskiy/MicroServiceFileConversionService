@@ -6,11 +6,11 @@ app:
     password: ${POSTGRES_PASSWORD:postgres}
     database: ${POSTGRES_DATABASE:postgres}
 
-  minio:
-    url:  ${MINIO_URL:http://localhost:9000}
-    access-key: ${MINIO_ACCESS_KEY:minioadmin}
-    secret-key: ${MINIO_SECRET_KEY:minioadmin}
-    bucket: ${MINIO_BUCKET:files}
+  seaweedfs:
+    url:  ${SEAWEEDFS_URL:http://localhost:9000}
+    access-key: ${SEAWEEDFS_ACCESS_KEY:seaweedfsadmin}
+    secret-key: ${SEAWEEDFS_SECRET_KEY:seaweedfsadmin}
+    bucket: ${SEAWEEDFS_BUCKET:files}
 
 spring:
   application:
@@ -27,9 +27,18 @@ spring:
           json:
             trusted:
               packages: "com.example.fileconversionservice.dto"
+            value:
+              default.type: "com.example.fileconversionservice.dto.FileConversionRequest"
+            use.type.headers: false
     producer:
+      acks: all
+      retries: 2147483647
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+        delivery.timeout.ms: 120000
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
   main:
     web-application-type: none
