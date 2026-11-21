@@ -13,13 +13,12 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class BacketInitializer implements ApplicationRunner {
+public class BucketInitializer implements ApplicationRunner {
 
     private final MinioClient s3Client;
 
     @Value("${app.seaweedfs.bucket}")
     private String bucket;
-
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
