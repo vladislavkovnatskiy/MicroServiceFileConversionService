@@ -29,20 +29,35 @@ public class ImageConverter implements Converter {
     public byte[] convert(byte[] source, String fileName) {
         try (PDDocument doc = new PDDocument();
              ByteArrayInputStream in = new ByteArrayInputStream(source)) {
+
             BufferedImage image = ImageIO.read(in);
             if (image == null) {
                 throw new ConversionException("Cannot read image: " + fileName);
             }
 
-            //TODO: Размер страницы = размер изображения, страница PDF будет размером с изображение (например, 4000×3000 px). Попробовать A4 (PDRectangle.A4) + масштабирование под страницу.
-            PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
+            // Страница всегда А4
+            PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
 
             PDImageXObject pdImage = LosslessFactory.createFromImage(doc, image);
 
-            try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
-                cs.drawImage(pdImage, 0, 0, image.getWidth(), image.getHeight());
+            float margin = 50f;
+            float maxW = PDRectangle.A4.getWidth() - 2 * margin;
+            float maxH = PDRectangle.A4.getHeight() - 2 * margin;
+
+            // Масштабируем что бы вписать в  maxW x maxH (А4) с сохранением пропорций
+            float scale = Math.min(maxW / image.getWidth(), maxH / image.getHeight());
+            float drawW =  image.getWidth() * scale;
+            float drawH =  image.getHeight() * scale;
+
+            // Централизация на странице
+            float x = (PDRectangle.A4.getWidth() - drawW) / 2;
+            float y = (PDRectangle.A4.getHeight() - drawH) / 2;
+
+            try (PDPageContentStream cs = new PDPageContentStream(doc, page)){
+                cs.drawImage(pdImage, x, y, drawW, drawH);
             }
+
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             doc.save(out);
             return out.toByteArray();
