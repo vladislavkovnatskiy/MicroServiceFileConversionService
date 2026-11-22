@@ -12,6 +12,9 @@ app:
     secret-key: ${SEAWEEDFS_SECRET_KEY:seaweedfsadmin}
     bucket: ${SEAWEEDFS_BUCKET:files}
 
+  kafka:
+    request-topic: file-conversion-request
+
 spring:
   application:
     name: FileConversionService
