@@ -9,8 +9,8 @@ import com.example.fileconversionservice.exception.ConversionException;
 import com.example.fileconversionservice.exception.UnsupportedFileTypeException;
 import com.example.fileconversionservice.repository.InboxEventRepository;
 import com.example.fileconversionservice.repository.OutboxEventRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,7 +29,7 @@ public class FileConversionService {
     private final OutboxEventRepository outboxRepo;
     private final StorageService storageService;
     private final ConverterRegistry  converterRegistry;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
 
     @Transactional
     public void process(FileConversionRequestDto request) {
@@ -65,9 +65,9 @@ public class FileConversionService {
 
     private void saveOutbox(FileConversionResultDto result) {
         try {
-            String payload = objectMapper.writeValueAsString(result);
+            String payload = jsonMapper.writeValueAsString(result);
             outboxRepo.save(new OutboxEvent(result.eventId(), payload, RESULT_TOPIC));
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Cannot serialize result for event " + result.eventId(), e);
         }
     }

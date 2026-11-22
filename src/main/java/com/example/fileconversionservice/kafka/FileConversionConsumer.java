@@ -15,7 +15,7 @@ public class FileConversionConsumer {
 
     @KafkaListener(
             topics = "${app.kafka.request-topic}",
-            groupId = "@{spring.kafka.consumer.group-id}"
+            groupId = "${spring.kafka.consumer.group-id}"
     )
     public void onMessage(FileConversionRequestDto request) {
         log.debug("Received event: {}", request);

@@ -13,7 +13,7 @@ public class StorageConfig {
     public MinioClient s3Client(
             @Value("${app.seaweedfs.url}") String url,
             @Value("${app.seaweedfs.access-key}") String accessKey,
-            @Value("${app.seaweedfs.access-secret}") String secretKey
+            @Value("${app.seaweedfs.secret-key}") String secretKey
     ) {
         return MinioClient.builder()
                 .endpoint(url)
