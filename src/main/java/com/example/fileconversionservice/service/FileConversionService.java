@@ -9,6 +9,7 @@ import com.example.fileconversionservice.exception.ConversionException;
 import com.example.fileconversionservice.exception.UnsupportedFileTypeException;
 import com.example.fileconversionservice.repository.InboxEventRepository;
 import com.example.fileconversionservice.repository.OutboxEventRepository;
+import org.springframework.beans.factory.annotation.Value;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 import lombok.RequiredArgsConstructor;
@@ -21,15 +22,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class FileConversionService {
 
-    // Топик, куда публикуем результат
-    // TODO: попробовать реализовать вместо константы @Value("${app.kafka.result-topic}")
-    public static final String RESULT_TOPIC = "file-conversion-result";
-
     private final InboxEventRepository inboxRepo;
     private final OutboxEventRepository outboxRepo;
     private final StorageService storageService;
     private final ConverterRegistry  converterRegistry;
     private final JsonMapper jsonMapper;
+
+    // Топик, куда публикуем результат
+    @Value("${app.kafka.result-topic}")
+    private String getResultTopic;
 
     @Transactional
     public void process(FileConversionRequestDto request) {
@@ -66,7 +67,7 @@ public class FileConversionService {
     private void saveOutbox(FileConversionResultDto result) {
         try {
             String payload = jsonMapper.writeValueAsString(result);
-            outboxRepo.save(new OutboxEvent(result.eventId(), payload, RESULT_TOPIC));
+            outboxRepo.save(new OutboxEvent(result.eventId(), payload, getResultTopic));
         } catch (JacksonException e) {
             throw new IllegalStateException("Cannot serialize result for event " + result.eventId(), e);
         }

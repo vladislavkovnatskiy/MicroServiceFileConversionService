@@ -14,7 +14,7 @@ app:
 
   kafka:
     request-topic: file-conversion-request
-
+    result-topic: file-conversion-result
 spring:
   application:
     name: FileConversionService
@@ -59,10 +59,13 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         format_sql: true
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.xml
   datasource:
     url: jdbc:postgresql://${app.postgres.host}:${app.postgres.port}/${app.postgres.database}
     username: ${app.postgres.username}

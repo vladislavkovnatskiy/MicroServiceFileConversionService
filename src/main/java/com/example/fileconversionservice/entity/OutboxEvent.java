@@ -25,7 +25,7 @@ public class OutboxEvent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "event_id")
+    @Column(name = "event_id", unique = true)
     private UUID eventId;
 
     // JSON-сериализованное тело события
